@@ -1,23 +1,21 @@
-# drop-baux — the lattice filesystem that pretends to be local
+# drop-baux 
 
-drop-baux is not NFS.  
-drop-baux is not Ceph.  
-drop-baux is not "yet another distributed filesystem that dies when one Pi loses Wi-Fi".
+the only distributed storage that doesn’t make you want to burn your house down, because it's SeaweedFS.
 
-drop-baux is **SeaweedFS in disguise** — a global object store that mounts as a normal directory and survives anything.
+You tried NFS. Your Pi Zero cried.  
+You tried Ceph. Your Pi Zero died.  
+You tried Garage and realized you don’t actually need Rust that badly.
 
-When you `cd ~/drop-baux/project`:
-- Your laptop sees the files
-- The Pi Zero in the garage sees the same files
-- The Arduino on the roof sees the same files
-- If the garage Pi explodes, nothing happens — the data lives on the other nodes
-- When it comes back, it just works again
+Now you run SeaweedFS and pretend it’s 1995 again, except it actually works.
 
-No quorum. No locks. No tears.
-
-### How it works (3 commands total)
-
-On every node (Pi, laptop, server):
 ```bash
-weed volume -dir=/drop-baux/vol -mserver=master.local:9333
-weed filer -dir=/drop-baux/filer
+# one node (any node, literally doesn’t matter)
+weed master -port=9333 &
+
+# every other node (yes, even the Pi Zero in the attic)
+weed volume -dir=/drop-baux/vol -mserver=any-node:9333 -port=8080 &
+weed filer  -dir=/drop-baux/filer -master=any-node:9333 -port=8888 &
+
+# optional: make it feel like a real filesystem when you’re drunk
+mkdir -p ~/drop-baux
+weed mount -dir=~/drop-baux -filer=localhost:8888 &
